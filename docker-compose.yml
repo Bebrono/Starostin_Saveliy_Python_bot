@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: dota_db
+    environment:
+      POSTGRES_USER: dota_user2
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: dota_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    ports:
+      - "5432:5432"
+
+  bot:
+    build:
+      context: ./bot
+    container_name: dota_bot
+    environment:
+      POSTGRES_USER: dota_user2
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: dota_db
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    depends_on:
+      - db
+    volumes:
+      - ./bot:/app
+      - ./parser:/app/parser
+
+  parser:
+    build:
+      context: ./parser
+    container_name: dota_parser
+    environment:
+      POSTGRES_USER: dota_user2
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: dota_db
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    depends_on:
+      - db
+    volumes:
+      - ./parser:/app
+
+volumes:
+  db_data:
